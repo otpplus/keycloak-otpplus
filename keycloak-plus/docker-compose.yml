@@ -1,0 +1,24 @@
+version: '3'
+
+networks:
+  keycloak:
+
+services:
+  keycloak:
+    image: otpdev/keycloak-plus:v1.0.0
+    container_name: com.otpplus.keycloak.custom.container
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    env_file:
+      - keycloak.common.env
+      - keycloak.specific.env
+      - secrets.env
+    networks:
+      - keycloak
+    user: root
+    labels:
+      org.labels-schema.group: "iam"
+    volumes:
+      - /var/log/kcplus:/opt/keycloak/data
