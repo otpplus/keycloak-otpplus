@@ -1,4 +1,4 @@
-# keycloak-plus-docker
+# keycloak-otpplus
 
 ## Overview
 Keycloak image with OTP Plus® which has built in plugin to use SMS and Email based OTP as a factor
