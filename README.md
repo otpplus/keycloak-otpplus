@@ -2,6 +2,7 @@
 
 ## Overview
 We have implemented MFA on top of keycloak so that you don't have to. Batteries(SMS) included!
+
 Keycloak image with OTP Plus® which has built in plugin to use SMS and Email based OTP as a factor
 
 ## Requirements
