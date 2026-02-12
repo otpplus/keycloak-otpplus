@@ -1,24 +1,152 @@
-version: '3'
+# ===========================================
+# SECURE UNIFIED STACK
+# Keycloak + PostgreSQL + Nginx + Device Fingerprint API
+# Created: After security incident - Jan 2026
+# ===========================================
+
+version: '3.8'
 
 networks:
-  keycloak:
+  # Internal network - NO external access possible
+  internal:
+    driver: bridge
+    internal: true
+  # Public network - only nginx connects externally
+  public:
+    driver: bridge
 
 services:
+  # ===========================================
+  # PostgreSQL - INTERNAL ONLY, NO EXPOSED PORTS
+  # ===========================================
+  postgres:
+    image: postgres:13-alpine
+    container_name: keycloak-postgres
+    restart: unless-stopped
+    # ⚠️ NO PORTS EXPOSED - prevents internet attacks!
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data/pgdata
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # ===========================================
+  # Keycloak - Custom OTPPlus Image
+  # ===========================================
   keycloak:
     image: otpdev/keycloak-plus:v1.0.0
     container_name: com.otpplus.keycloak.custom.container
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      # Override DB settings to use internal postgres
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_PROXY: edge
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
     env_file:
       - keycloak.common.env
       - keycloak.specific.env
       - secrets.env
+    volumes:
+      - /var/log/kcplus:/opt/keycloak/data
     networks:
-      - keycloak
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
     user: root
     labels:
       org.labels-schema.group: "iam"
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "cat /proc/1/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # ===========================================
+  # Device Fingerprint API
+  # ===========================================
+  device-api:
+    image: node:18-alpine
+    container_name: device-fingerprint-api
+    restart: unless-stopped
+    working_dir: /app
+    command: node server.js
+    expose:
+      - "3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_EXTERNAL_URL: https://kcplus-dev.otp.plus
+      KEYCLOAK_REALM: device-fingerprint
+      KEYCLOAK_CLIENT_ID: shopify-widget
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
-      - /var/log/kcplus:/opt/keycloak/data
+      - /opt/device-fingerprint/backend:/app:ro
+      - /opt/device-fingerprint/backend/node_modules:/app/node_modules:ro
+    networks:
+      - internal
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ===========================================
+  # Nginx - ONLY PUBLIC ENTRY POINT
+  # ===========================================
+  nginx:
+    image: nginx:alpine
+    container_name: device-fingerprint-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:8080:8080"  # Local only!
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /opt/device-fingerprint/backend/cert.pem:/etc/nginx/cert.pem:ro
+      - /opt/device-fingerprint/backend/key.pem:/etc/nginx/key.pem:ro
+    networks:
+      - internal
+      - public
+    depends_on:
+      - keycloak
+      - device-api
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  postgres-data:
