@@ -101,10 +101,34 @@ Current Keycloak settings (verified):
 4. **Search User**: Enter `device-fp_0k2ljjkekzmkx`
 
 5. **Check Status**:
-   - Click on user
-   - Look for temporary disable indicator
+   - Click on user to open details
+   - **"Enabled" toggle**: Should be ON (if OFF, user cannot login at all)
+   - **"Temporarily Locked" toggle**: Shows brute force lockout status
+     - **ON** = User is locked due to brute force detection
+     - **OFF** = User is not locked
    - Check "Sessions" tab for active sessions
-   - View "Credentials" tab to reset if needed
+   - Check "Credentials" tab to see password status
+
+### Understanding the Toggles:
+
+| Toggle | Purpose | When It Changes |
+|--------|---------|-----------------|
+| **Enabled** | Master on/off for user account | Manually set by admin |
+| **Temporarily Locked** | Brute force lockout status | Auto-set by Keycloak after max failures |
+| **Email Verified** | Email confirmation status | Not relevant for device users |
+
+### Viewing Brute Force Events:
+
+1. **Left menu → Events**
+2. **Tab: Login Events**
+3. **Filter by**:
+   - Event Type: `LOGIN_ERROR`
+   - User: `device-fp_0k2ljjkekzmkx`
+4. **Look for**:
+   - Multiple failed login attempts
+   - Error: "Invalid user credentials"
+   - Client ID: "device-client"
+   - IP address of attacker
 
 ---
 
@@ -127,20 +151,37 @@ done
 
 ## Unlocking a Locked Account
 
-### Option 1: Wait
+### Option 1: Wait (Recommended)
 - Accounts auto-unlock after 5 minutes of no failed attempts
+- Keycloak's `maxFailureWaitSeconds: 300` = 5 minutes
 
-### Option 2: Manual Unlock (Admin UI)
+### Option 2: Manual Unlock via UI Toggle
 1. Keycloak Admin → device-fingerprint realm
 2. Users → Find locked user
-3. Credentials tab → Reset password
-4. This clears the brute force counter
+3. Click on the user to open details
+4. Toggle **"Temporarily Locked"** from ON to OFF
+5. Click "Save"
 
-### Option 3: API Unlock (via script on server)
+**Note:** The "Temporarily Locked" toggle appears in the user details page and controls the brute force lockout status.
+
+### Option 3: Clear Brute Force Counter (Admin UI)
+1. Keycloak Admin → device-fingerprint realm
+2. Left menu → **Sessions** (or Events)
+3. Look for **"Clear all login failures"** button
+4. Or navigate to: **Realm Settings → Security Defenses → Brute Force Detection**
+5. Use **"Clear all failures"** action
+
+### Option 4: API Unlock (via script on server)
+
+**Method A: Clear brute force counter for specific user**
+
 ```bash
+ssh root@216.219.95.237
+
 docker exec device-fingerprint-api node -e "
 (async () => {
-  const token = await fetch('http://keycloak:8080/realms/master/protocol/openid-connect/token', {
+  // Get admin token
+  const tokenResp = await fetch('http://keycloak:8080/realms/master/protocol/openid-connect/token', {
     method: 'POST',
     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     body: new URLSearchParams({
@@ -149,23 +190,80 @@ docker exec device-fingerprint-api node -e "
       grant_type: 'password',
       client_id: 'admin-cli'
     })
-  }).then(r => r.json());
+  });
+  const tokenData = await tokenResp.json();
 
   // Get user ID
-  const users = await fetch('http://keycloak:8080/admin/realms/device-fingerprint/users?username=device-fp_0k2ljjkekzmkx&exact=false', {
-    headers: {'Authorization': 'Bearer ' + token.access_token}
-  }).then(r => r.json());
+  const usersResp = await fetch('http://keycloak:8080/admin/realms/device-fingerprint/users?username=device-fp_0k2ljjkekzmkx&exact=false', {
+    headers: {'Authorization': 'Bearer ' + tokenData.access_token}
+  });
+  const users = await usersResp.json();
+
+  if (users.length > 0) {
+    const userId = users[0].id;
+    console.log('Found user:', users[0].username);
+    console.log('User ID:', userId);
+
+    // DELETE clears the brute force counter
+    const clearResp = await fetch('http://keycloak:8080/admin/realms/device-fingerprint/attack-detection/brute-force/users/' + userId, {
+      method: 'DELETE',
+      headers: {'Authorization': 'Bearer ' + tokenData.access_token}
+    });
+
+    if (clearResp.ok || clearResp.status === 204) {
+      console.log('✅ Brute force counter cleared');
+      console.log('User is now unlocked');
+    } else {
+      console.log('⚠️  Response:', clearResp.status, clearResp.statusText);
+    }
+  } else {
+    console.log('User not found');
+  }
+})();
+"
+```
+
+**Method B: Toggle "Temporarily Locked" via API**
+
+```bash
+docker exec device-fingerprint-api node -e "
+(async () => {
+  const tokenResp = await fetch('http://keycloak:8080/realms/master/protocol/openid-connect/token', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: new URLSearchParams({
+      username: 'admin',
+      password: 'y4m44EKK8bVk',
+      grant_type: 'password',
+      client_id: 'admin-cli'
+    })
+  });
+  const tokenData = await tokenResp.json();
+
+  const usersResp = await fetch('http://keycloak:8080/admin/realms/device-fingerprint/users?username=device-fp_0k2ljjkekzmkx&exact=false', {
+    headers: {'Authorization': 'Bearer ' + tokenData.access_token}
+  });
+  const users = await usersResp.json();
 
   if (users.length > 0) {
     const userId = users[0].id;
 
-    // Clear brute force
-    await fetch('http://keycloak:8080/admin/realms/device-fingerprint/attack-detection/brute-force/users/' + userId, {
-      method: 'DELETE',
-      headers: {'Authorization': 'Bearer ' + token.access_token}
+    // Update user to disable temporary lock
+    const updateResp = await fetch('http://keycloak:8080/admin/realms/device-fingerprint/users/' + userId, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + tokenData.access_token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ...users[0],
+        enabled: true  // Ensure user is enabled
+      })
     });
 
-    console.log('Brute force counter cleared for:', users[0].username);
+    if (updateResp.ok || updateResp.status === 204) {
+      console.log('✅ User enabled and unlocked');
+    }
   }
 })();
 "
