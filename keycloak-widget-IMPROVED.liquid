@@ -1,0 +1,157 @@
+{% comment %}
+  Device Fingerprint Widget - IMPROVED with better logging
+  Protected paths: /collections/all, /pages/contact
+{% endcomment %}
+
+{% assign protected_paths = '/collections/all,/pages/contact' | split: ',' %}
+{% assign current_path = request.path %}
+{% assign load_widget = false %}
+
+{% for path in protected_paths %}
+  {% if current_path contains path %}
+    {% assign load_widget = true %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% comment %} ALWAYS log widget status {% endcomment %}
+<script>
+console.log('[DeviceWidget] Current path:', '{{ request.path }}');
+console.log('[DeviceWidget] Protected paths:', {{ protected_paths | json }});
+console.log('[DeviceWidget] Widget will load:', {{ load_widget }});
+</script>
+
+{% if load_widget %}
+<script>
+(function() {
+  const CONFIG = {
+    apiUrl: 'https://kcplus-dev.otp.plus',
+    cookieName: 'device_access_token',
+    debug: true
+  };
+
+  function log(...args) {
+    if (CONFIG.debug) {
+      console.log('[DeviceWidget]', ...args);
+    }
+  }
+
+  log('🎯 Widget activated for path:', '{{ request.path }}');
+
+  async function generateFingerprint() {
+    log('⏳ Generating fingerprint...');
+    const c = {};
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 200; canvas.height = 50;
+      ctx.textBaseline = 'top'; ctx.font = '14px Arial';
+      ctx.fillStyle = '#f60'; ctx.fillRect(0, 0, 100, 50);
+      ctx.fillStyle = '#069'; ctx.fillText('DeviceFingerprint', 2, 15);
+      c.canvas = canvas.toDataURL().slice(0, 100);
+    } catch (e) { c.canvas = 'n/a'; }
+    c.userAgent = navigator.userAgent;
+    c.screen = { w: screen.width, h: screen.height };
+    c.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const str = JSON.stringify(c);
+    const data = new TextEncoder().encode(str);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return 'fp_' + Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('').substring(0,32);
+  }
+
+  function getCookie(n) {
+    const v = `; ${document.cookie}`;
+    const p = v.split(`; ${n}=`);
+    if (p.length === 2) return p.pop().split(';').shift();
+    return null;
+  }
+
+  function setCookie(n, v, d) {
+    document.cookie = `${n}=${v}; path=/; max-age=${d}; SameSite=Lax; Secure`;
+    log('🍪 Cookie set:', n);
+  }
+
+  function showBlocked(reason) {
+    log('🚫 Showing blocked overlay:', reason);
+    const o = document.createElement('div');
+    o.id = 'access-overlay';
+    o.innerHTML = `<style>#access-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:999999;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif}#access-overlay .m{background:#fff;padding:40px;border-radius:12px;text-align:center;max-width:400px}#access-overlay h2{margin:0 0 10px;color:#dc2626}#access-overlay p{color:#6b7280;margin:0 0 20px}#access-overlay button{padding:12px 24px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer}</style><div class="m"><h2>🚫 Access ${reason.includes('rate') ? 'Temporarily Restricted' : 'Denied'}</h2><p>${reason || 'This device is not authorized to view this page.'}</p><button onclick="location.href='/'">Return Home</button></div>`;
+    document.body.appendChild(o);
+  }
+
+  async function checkAccess() {
+    log('🚀 Starting access check...');
+
+    try {
+      const fp = await generateFingerprint();
+      log('🔍 Fingerprint:', fp);
+
+      const apiUrl = `${CONFIG.apiUrl}/api/device/register`;
+      log('📡 Calling API:', apiUrl);
+
+      const requestBody = {
+        fingerprint: fp,
+        metadata: {
+          userAgent: navigator.userAgent,
+          store: '{{ shop.domain }}',
+          path: '{{ request.path }}',
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      log('📤 Request body:', requestBody);
+
+      // Register/verify device
+      const r = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+
+      log('📥 Response status:', r.status, r.statusText);
+
+      const d = await r.json();
+      log('📦 Full API Response:', d);
+      log('✨ Device Status:', d.status);
+
+      if (d.status === 'allowed') {
+        setCookie(CONFIG.cookieName, d.token, 90*24*60*60);
+        log('✅ Access granted');
+        if (d.isNew) {
+          log('🆕 New device registered');
+        }
+      } else if (d.status === 'rate_limited') {
+        log('🚫 Rate limited - showing overlay');
+        showBlocked(d.message || 'Too many attempts detected. Please try again in a few minutes.');
+      } else if (d.status === 'blocked') {
+        log('🚫 Device blocked - showing overlay');
+        showBlocked(d.message || 'This device has been blocked.');
+      } else {
+        log('⚠️ Unknown status:', d.status);
+      }
+    } catch (e) {
+      log('❌ Error occurred:', e.message);
+      log('❌ Error stack:', e.stack);
+      // Fail open for demo (change to showBlocked() for production)
+      log('⚠️ Failing open - allowing access despite error');
+    }
+  }
+
+  log('📄 Widget script loaded');
+
+  if (document.readyState === 'loading') {
+    log('⏳ Waiting for DOMContentLoaded...');
+    document.addEventListener('DOMContentLoaded', checkAccess);
+  } else {
+    log('✅ DOM already loaded, running immediately');
+    checkAccess();
+  }
+})();
+</script>
+{% else %}
+<script>
+console.log('[DeviceWidget] ⏭️ Skipping - current path not in protected list');
+console.log('[DeviceWidget] Current path:', '{{ request.path }}');
+console.log('[DeviceWidget] To activate, visit: /collections/all or /pages/contact');
+</script>
+{% endif %}
