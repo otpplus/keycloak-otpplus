@@ -169,16 +169,27 @@ Keycloak Admin Console - Settings IT Can Control:
 └──────────────────────────────────────┘
 ```
 
-- ✅ Non-technical admins can adjust
+- ✅ Non-technical admins can adjust settings
 - ✅ No code changes needed
 - ✅ Takes effect immediately
+- ✅ View all failed login events in Events tab
 
-**Failed Login Events:**
-All attack attempts logged with timestamp, IP, user
+**User Unlock:**
+Simple one-line command for IT:
+```bash
+docker exec device-fingerprint-api node /tmp/unlock.js USERNAME
+```
+
+**Why API vs UI button?**
+- Keycloak uses API-first design for security operations
+- Prevents accidental mass unlocks during active attacks
+- Better audit trail and automation capability
+- Enterprise best practice
 
 **[Insert screenshots here]**
 1. Screenshot: Keycloak Brute Force Settings panel
 2. Screenshot: Failed login events table
+3. Screenshot: User details showing "Temporarily Locked" status
 
 ---
 
@@ -200,7 +211,7 @@ All attack attempts logged with timestamp, IP, user
 - ✅ All attempts logged to database
 - ✅ Automatic lockout/unlock
 - ✅ Full forensic audit trail
-- ✅ IT-manageable via UI
+- ✅ IT-manageable via API (one-line command)
 - ✅ Zero custom rate limit code
 
 ---
@@ -242,9 +253,10 @@ Switched from "lookup" to "authenticate" to enable Keycloak's built-in brute for
 **Key Wins:**
 - 🛡️ Bot attacks automatically blocked (5 strikes)
 - 🛡️ Zero custom code written
-- 🛡️ IT can manage without developers
+- 🛡️ IT can manage via simple API commands
 - 🛡️ 0 downtime, 34 devices migrated
 - 🛡️ Enterprise-grade security (bank-level)
+- 🛡️ API-first design prevents accidental unlocks
 
 **Business Impact:**
 - 💰 No additional cost

@@ -88,9 +88,10 @@ OBJECTION HANDLING
 ───────────────────────────────────────────────────────────────
 
 Q: "What if legitimate users get locked out?"
-A: "IT can unlock them in Keycloak UI in one click. Also,
-    failures reset after 10 minutes of no activity. We can
-    adjust thresholds if we see false positives."
+A: "Three options: (1) Auto-unlock after 5 minutes, (2) IT runs
+    one-line unlock command, (3) Adjust thresholds. Keycloak uses
+    API-first design for security ops - prevents accidental mass
+    unlocks and provides audit trails."
 
 Q: "Is this tested?"
 A: "Yes. Ran multiple bot attacks. All blocked after 5 attempts.
@@ -193,6 +194,12 @@ To show users:
 1. Left menu: Users
 2. Show: 34+ device-fp_* users
 3. Click one: Show attributes (fingerprint, userAgent, etc.)
+4. Point out: "Temporarily Locked" field (read-only, shows lock status)
+
+To unlock a user (if needed during demo):
+1. SSH: ssh root@216.219.95.237
+2. Run: docker exec device-fingerprint-api node /tmp/unlock.js USERNAME
+3. Say: "One command unlocks user - API-first design for security"
 
 ═══════════════════════════════════════════════════════════════
 

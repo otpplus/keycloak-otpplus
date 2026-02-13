@@ -143,9 +143,10 @@ What changed:
 
 Evidence:
 ✅ Live bot attacks blocked after 5 attempts
-✅ IT can manage via Keycloak UI (no code)
+✅ IT can manage via simple API commands
 ✅ All attacks logged for forensics
 ✅ Works with cm4-securify2-2.myshopify.com
+✅ API-first design prevents accidental unlocks
 
 Currently live: kcplus-dev.otp.plus
 

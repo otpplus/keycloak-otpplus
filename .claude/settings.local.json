@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh -o StrictHostKeyChecking=no root@216.219.95.237 \"pwd && ls -la /home/otp 2>/dev/null || ls -la /root 2>/dev/null || echo ''Listing home directory failed''\")",
+      "Bash(sshpass -p 'i55Z!cC3Dn5m' ssh -o StrictHostKeyChecking=no root@216.219.95.237 \"pwd && ls -la /home/otp 2>/dev/null || ls -la /root 2>/dev/null || echo ''Listing home directory failed''\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(curl:*)",
+      "Bash(for i in {1..6})",
+      "Bash(do echo \"=== Attempt $i ===\" curl -s -k https://kcplus-dev.otp.plus/api/device/register -H \"Content-Type: application/json\" -d \"{\"\"fingerprint\"\":\"\"brutetest$i\"\"}\")",
+      "Bash(git push:*)",
+      "Bash(cat:*)",
+      "Bash(sshpass -p 'i55Z!cC3Dn5m' ssh -o StrictHostKeyChecking=no root@216.219.95.237 'cat > /tmp/bot_attack.sh && chmod +x /tmp/bot_attack.sh && echo \"\"\"\"Script uploaded successfully\"\"\"\" && ls -lh /tmp/bot_attack.sh')",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

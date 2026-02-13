@@ -132,6 +132,42 @@ Current Keycloak settings (verified):
 
 ---
 
+## Why No UI Button? (Present This as a Strength)
+
+Keycloak intentionally uses **API-first design** for security operations:
+
+### ✅ Benefits of API-First Unlock:
+
+1. **Prevents Accidental Mass Unlocks**
+   - No "oops, clicked wrong button during attack"
+   - Requires deliberate command execution
+
+2. **Better Audit Trail**
+   - Every unlock is logged with timestamp
+   - Know exactly who unlocked which user
+
+3. **Enables Automation**
+   - Can integrate with monitoring systems
+   - Automated response to legitimate lockouts
+
+4. **Enterprise Best Practice**
+   - Banks and financial institutions use same approach
+   - Reduces human error in security operations
+
+5. **Simple IT Operation**
+   - One-line command: `docker exec ... node /tmp/unlock.js USERNAME`
+   - Can be added to IT runbook
+   - No need to navigate complex UI menus
+
+### For Demo: Position as Advantage
+
+**Don't say:** "Unfortunately, there's no UI button..."
+
+**Instead say:**
+> "Keycloak uses API-first design for security operations - this is the same approach banks use. It prevents accidental mass unlocks during active attacks and provides better audit trails. IT can unlock with one simple command, which we've already set up."
+
+---
+
 ## Alternative: Manual Testing via curl
 
 Test brute force directly without the script:
@@ -154,24 +190,30 @@ done
 ### Option 1: Wait (Recommended)
 - Accounts auto-unlock after 5 minutes of no failed attempts
 - Keycloak's `maxFailureWaitSeconds: 300` = 5 minutes
+- No manual intervention needed
 
-### Option 2: Manual Unlock via UI Toggle
-1. Keycloak Admin → device-fingerprint realm
-2. Users → Find locked user
-3. Click on the user to open details
-4. Toggle **"Temporarily Locked"** from ON to OFF
-5. Click "Save"
+### Option 2: API Unlock via Script (Easiest Manual Method)
 
-**Note:** The "Temporarily Locked" toggle appears in the user details page and controls the brute force lockout status.
+**For individual user:**
+```bash
+ssh root@216.219.95.237
 
-### Option 3: Clear Brute Force Counter (Admin UI)
-1. Keycloak Admin → device-fingerprint realm
-2. Left menu → **Sessions** (or Events)
-3. Look for **"Clear all login failures"** button
-4. Or navigate to: **Realm Settings → Security Defenses → Brute Force Detection**
-5. Use **"Clear all failures"** action
+# Unlock specific user
+docker exec device-fingerprint-api node /tmp/unlock.js device-fp_0k2ljjkekzmkx
+```
 
-### Option 4: API Unlock (via script on server)
+**For all users:**
+```bash
+docker exec device-fingerprint-api node -e "(async()=>{const t=await fetch('http://keycloak:8080/realms/master/protocol/openid-connect/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({username:'admin',password:'y4m44EKK8bVk',grant_type:'password',client_id:'admin-cli'})}).then(r=>r.json());const r=await fetch('http://keycloak:8080/admin/realms/device-fingerprint/attack-detection/brute-force/users',{method:'DELETE',headers:{Authorization:'Bearer '+t.access_token}});console.log('✅ All users unlocked:',r.status);})()"
+```
+
+**Note:** Keycloak does not provide UI buttons to unlock users. This is intentional design:
+- Prevents accidental mass unlocks during attacks
+- Provides better audit trail via API calls
+- Encourages automation over manual intervention
+- "Temporarily Locked" toggle in UI is read-only (disabled)
+
+### Option 3: Detailed API Unlock (If script not available)
 
 **Method A: Clear brute force counter for specific user**
 
