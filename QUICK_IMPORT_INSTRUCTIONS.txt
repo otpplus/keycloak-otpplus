@@ -1,0 +1,165 @@
+═══════════════════════════════════════════════════════════════
+QUICK IMPORT TO GOOGLE SLIDES - 5 MINUTES
+═══════════════════════════════════════════════════════════════
+
+METHOD 1: FASTEST (Copy-Paste)
+───────────────────────────────────────────────────────────────
+
+1. Open: https://slides.google.com
+2. Click: "Blank" presentation
+3. Click: File → Page setup → Choose "Widescreen 16:9"
+
+4. For each of the 10 slides in POC_Keycloak_BruteForce.md:
+
+   Slide 1 (Title):
+   ├─ Keep default title slide layout
+   ├─ Copy title: "POC: Keycloak Brute Force Protection"
+   ├─ Copy subtitle: "Device Fingerprinting API"
+   └─ Add date: "February 12, 2026"
+
+   Slides 2-10:
+   ├─ Insert new slide (Ctrl+M / Cmd+M)
+   ├─ Choose layout: "Title and body" or "Title and two columns"
+   ├─ Copy the section title (e.g., "The Problem ❌")
+   ├─ Copy the bullet points or content
+   └─ Format text size to 18-24pt
+
+5. On Slide 7, insert screenshots:
+   ├─ Insert → Image → Upload from computer
+   ├─ Add: keycloak-brute-force-settings.png
+   └─ Add: keycloak-login-events.png
+
+6. Apply theme:
+   ├─ Click: Slide → Change theme
+   ├─ Choose: "Simple Dark" or "Pitch"
+   └─ Customize colors if needed
+
+7. Done! Export as PDF or share link.
+
+═══════════════════════════════════════════════════════════════
+
+METHOD 2: USE EXISTING TEMPLATE
+───────────────────────────────────────────────────────────────
+
+1. Go to: https://slides.google.com/template/gallery
+2. Search: "Business pitch" or "Project presentation"
+3. Choose any professional template
+4. Replace placeholder text with content from POC_Keycloak_BruteForce.md
+5. Insert 2 screenshots on Slide 7
+6. Done!
+
+═══════════════════════════════════════════════════════════════
+
+SCREENSHOTS TO TAKE (5 minutes)
+───────────────────────────────────────────────────────────────
+
+Screenshot 1: Keycloak Brute Force Settings
+┌──────────────────────────────────────────────────────────┐
+│ 1. Open: https://kcplus-dev.otp.plus/admin/             │
+│ 2. Login: admin / y4m44EKK8bVk                           │
+│ 3. Top-left dropdown: Select "device-fingerprint" realm │
+│ 4. Left menu: Realm Settings                            │
+│ 5. Tab: Security Defenses                               │
+│ 6. Section: Brute Force Detection                       │
+│ 7. Screenshot the entire settings panel                 │
+│ 8. Save as: keycloak-brute-force-settings.png           │
+└──────────────────────────────────────────────────────────┘
+
+Screenshot 2: Failed Login Events
+┌──────────────────────────────────────────────────────────┐
+│ 1. In Keycloak Admin: Left menu → Events                │
+│ 2. Tab: Login Events                                    │
+│ 3. Filter dropdown: Event Type = LOGIN_ERROR            │
+│ 4. Date range: Last 1 hour                              │
+│ 5. Click one event to expand details (optional)         │
+│ 6. Screenshot the table with failed attempts            │
+│ 7. Save as: keycloak-login-events.png                   │
+└──────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════
+
+DESIGN TIPS
+───────────────────────────────────────────────────────────────
+
+Font Sizes:
+• Slide titles: 36-44pt
+• Body text: 18-24pt
+• Code/terminal: 14-16pt (Courier New)
+
+Colors:
+• Headers: Dark blue (#1a237e)
+• Success/checkmarks: Green (#4caf50)
+• Warnings/errors: Red (#f44336)
+• Background: White or light gray
+
+Formatting:
+✓ Keep text left-aligned
+✓ Use bullet points for lists
+✓ Add spacing between sections
+✓ Use emoji (already in text)
+✓ Bold key numbers (34 devices, 5 attempts, etc.)
+
+═══════════════════════════════════════════════════════════════
+
+SHARING WITH CO-FOUNDER
+───────────────────────────────────────────────────────────────
+
+Option A: Share Link
+1. Click: "Share" button (top-right)
+2. Change: "Restricted" → "Anyone with the link can view"
+3. Copy link
+4. Send in Google Chat message
+
+Option B: Export PDF
+1. File → Download → PDF Document (.pdf)
+2. Save as: POC_Keycloak_BruteForce.pdf
+3. Attach to Google Chat message
+
+Option C: Present Live
+1. Click: "Present" button (top-right)
+2. Choose: "Present with speaker notes" if you added notes
+3. Share screen during meeting
+
+═══════════════════════════════════════════════════════════════
+
+RECOMMENDED GOOGLE CHAT MESSAGE
+───────────────────────────────────────────────────────────────
+
+Copy-paste this:
+
+───────────────────────────────────────────────────────────────
+Hey [Name] 👋
+
+Quick update: Finished the brute force protection POC.
+
+Bottom line: Bots can no longer hammer our API infinitely.
+Keycloak now auto-blocks after 5 failed attempts.
+
+What changed:
+• API switched from "lookup" to "authenticate"
+• Keycloak's built-in brute force kicked in
+• Zero custom rate limiting code
+• 34 devices migrated, zero downtime
+
+Evidence:
+✅ Live bot attacks blocked after 5 attempts
+✅ IT can manage via Keycloak UI (no code)
+✅ All attacks logged for forensics
+✅ Works with cm4-securify2-2.myshopify.com
+
+Currently live: kcplus-dev.otp.plus
+
+Ready for production when you approve. Can demo in
+10 mins to show bots getting blocked in real-time.
+
+Deck: [Insert Google Slides link]
+───────────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════════════
+
+TOTAL TIME: 10 minutes
+• Create slides: 5 minutes
+• Take screenshots: 3 minutes
+• Format/polish: 2 minutes
+
+═══════════════════════════════════════════════════════════════
