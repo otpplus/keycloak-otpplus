@@ -45,7 +45,7 @@ Keycloak Admin: https://kcplus-dev.otp.plus/admin/
                 (admin / y4m44EKK8bVk)
 
 SSH Server:     ssh root@216.219.95.237
-                (password: i55Z!cC3Dn5m)
+                (password: not kept in this repository)
 
 ═══════════════════════════════════════════════════════════════
 
@@ -158,7 +158,7 @@ BOT ATTACK TEST SCRIPT
 Run this during demo:
 
 ssh root@216.219.95.237
-# Password: i55Z!cC3Dn5m
+# Password: not kept in this repository
 
 # Run the bot attack
 /tmp/bot_attack.sh

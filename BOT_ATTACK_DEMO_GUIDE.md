@@ -8,7 +8,7 @@ The bot attack demonstration script is ready on the server at `/tmp/bot_attack.s
 
 ```bash
 ssh root@216.219.95.237
-# Password: i55Z!cC3Dn5m
+# Password: not kept in this repository (SEC-1247)
 
 bash /tmp/bot_attack.sh
 ```
