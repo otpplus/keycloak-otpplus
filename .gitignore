@@ -2,6 +2,10 @@
 .env
 secrets.env
 *.pem
+# Claude Code's per-machine settings: its permission allowlist records commands
+# verbatim, passwords included (SEC-1247)
+.claude/settings.local.json
+CLAUDE.local.md
 
 # Database data
 postgres-data/
