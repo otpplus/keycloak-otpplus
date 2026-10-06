@@ -22,7 +22,7 @@ DELETE http://keycloak:8080/admin/realms/device-fingerprint/attack-detection/bru
 
 ```bash
 ssh root@216.219.95.237
-# Password: i55Z!cC3Dn5m
+# Password: ask the server owner; never write it into a tracked file (SEC-1247)
 
 # Unlock a specific user
 docker exec device-fingerprint-api node /tmp/unlock.js device-fp_0k2ljjkekzmkx
