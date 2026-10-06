@@ -110,7 +110,7 @@ docker exec device-fingerprint-api node -e "(async()=>{const t=await fetch('http
 
 ### Credentials (Keep Private):
 - Keycloak: `admin` / `y4m44EKK8bVk`
-- SSH: user `root`, password not kept in this repository (SEC-1247)
+- SSH: user `root`; the password is never written into a tracked file (SEC-1247)
 
 ---
 
